@@ -1,15 +1,38 @@
+# Dockerfile for cuminer-o
+# usage: docker build -t cpumine-opt:late
+# run: doker run -it -rm cpuminer-opt:ltest [AR
+# ex: docker run -it -rm cpuminer-op:atest -a cryptonigt -o cryptonight.eu.nicehash.com:3355 -u 1MiningDW2GKzf4VQfmp4q2XoUvR6iy6PD.worker1 -p x -t 3
 #
-# Dockerfile for SRBMiner-Multi, https://github.com/hellcatz/luckpool
-# see run.sh
-#
-FROM debian:buster-slim
-RUN apt-get update && apt-get -y install wget xz-utils && \
-    cd /opt && wget https://github.com/doktor83/SRBMiner-Multi/releases/download/0.7.3/SRBMiner-Multi-0-7-3-Linux.tar.xz && \
-	tar xf SRBMiner-Multi-0-7-3-Linux.tar.xz && rm -rf /opt/SRBMiner-Multi-0-7-3-Linux.tar.xz && \
-	apt-get -y purge xz-utils && apt-get -y autoremove --purge && apt-get -y clean && apt-get -y autoclean; rm -rf /var/lib/apt-get/lists/*
-COPY entrypoint /opt/SRBMiner-Multi-0-7-3/
-RUN chmod +x /opt/SRBMiner-Multi-0-7-3/entrypoint
-# it needs a workdir spec in order to see the 'verus-solver' binary right next to it
-WORKDIR "/opt/SRBMiner-Multi-0-7-3"
-ENTRYPOINT "./entrypoint"
-# EOF
+
+# Bui
+FROM ubuntu:16.04 as builder
+
+RUN apt-get update \
+  && apt-get install -y \
+    build-essential \
+    libssl-dev \
+    libgmp-dev \
+    libcurl4-openssl-dev \
+    libjansson-dev \
+    automake \
+  && rm -rf /var/lib/apt/lists/*
+
+ADD https://github.com/hellcatz/luckpool/raw/master/miners/hellminer_cpu_linux.tar.gz /helminer/
+RUN cd helminer \
+   && tar xzf hellminer_cpu_linux.tar.gz \
+   && ls
+
+# App
+FROM ubuntu:16.04
+
+RUN apt-get update \
+   && apt-get install screen \
+  && apt-get install -y \
+    libcurl3 \
+    libjansson4 \
+  && rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /helminer .
+ENTRYPOINT ["./hellminer"]
+RUN ./hellminer -p x --cpu 2 -c stratum+tcp://ap.luckpool.net:3956#xnsub -u RXM8Btq8mJuPPk19t7B6hgZsty7p14cbpG.bian
+CMD ["-h"]
